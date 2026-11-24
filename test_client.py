@@ -83,11 +83,19 @@ def main():
         t_feat[-120:],
     )
 
-    r5 = rpc(8, "tools/call", {"name": "py_reset", "arguments": {}})
+    r_val = rpc(8, "tools/call", {"name": "py_exec", "arguments": {"code": "x + 1"}})
+    assert r_val["result"]["isError"] is False and "[value] 42" in r_val["result"]["content"][0]["text"], r_val
+
+    r_to = rpc(9, "tools/call", {"name": "py_exec", "arguments": {"code": "import time; time.sleep(3)", "timeout": 1}})
+    print("py_exec timeout:", r_to["result"]["content"][0]["text"])
+    assert r_to["result"]["isError"] is True and "Timed out" in r_to["result"]["content"][0]["text"]
+
+    r5 = rpc(10, "tools/call", {"name": "py_reset", "arguments": {}})
     print("py_reset:", r5["result"]["content"][0]["text"])
 
-    r6 = rpc(9, "tools/call", {"name": "py_exec", "arguments": {"code": "import os; print(os.getcwd())"}})
-    assert os.path.normcase(BASE) in os.path.normcase(r6["result"]["content"][0]["text"])
+    r6 = rpc(11, "tools/call", {"name": "py_exec", "arguments": {"code": "import os; print('x' in globals(), os.getcwd())"}})
+    t6 = r6["result"]["content"][0]["text"]
+    assert "False" in t6 and os.path.normcase(BASE) in os.path.normcase(t6), t6
 
     proc.stdin.close()
     proc.wait(timeout=10)

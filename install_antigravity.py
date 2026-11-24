@@ -29,6 +29,7 @@ MCP_CANDIDATES = [
 ]
 
 PLUGIN_DIR = os.path.join(HOME, ".gemini", "config", "plugins", "code-mode")
+BACKUP_DIR = os.path.join(HOME, ".gemini", "config", "backups")
 
 ENTRY = {
     "command": PYTHON,
@@ -49,9 +50,20 @@ def install_plugin():
     if not os.path.isdir(PLUGIN_SRC):
         print("Plugin folder not found, skipping:", PLUGIN_SRC)
         return
-    os.makedirs(os.path.dirname(PLUGIN_DIR), exist_ok=True)
+    plugins_root = os.path.dirname(PLUGIN_DIR)
+    os.makedirs(plugins_root, exist_ok=True)
+    for name in sorted(os.listdir(plugins_root)):
+        src = os.path.join(plugins_root, name)
+        if name.startswith("code-mode.bak-") and os.path.isdir(src):
+            os.makedirs(BACKUP_DIR, exist_ok=True)
+            dst = os.path.join(BACKUP_DIR, name)
+            if os.path.exists(dst):
+                dst = dst + "-" + time.strftime("%H%M%S")
+            shutil.move(src, dst)
+            print("Moved legacy plugin backup:", dst)
     if os.path.isdir(PLUGIN_DIR):
-        backup = PLUGIN_DIR + ".bak-" + time.strftime("%Y%m%d-%H%M%S")
+        os.makedirs(BACKUP_DIR, exist_ok=True)
+        backup = os.path.join(BACKUP_DIR, "code-mode.bak-" + time.strftime("%Y%m%d-%H%M%S"))
         shutil.copytree(PLUGIN_DIR, backup)
         print("Backed up plugin:", backup)
     shutil.copytree(PLUGIN_SRC, PLUGIN_DIR, dirs_exist_ok=True)

@@ -47,6 +47,17 @@ python install_antigravity.py --write
 > [!TIP]
 > The installer automatically enables **`eager: true`** for `py_exec` and installs the bundled **`plugin/rules/AGENTS.md`** guidelines so Antigravity uses Code Mode right away instead of falling back to separate shell commands.
 
+## 🔄 Update
+
+Inside your existing `code-mode-antigravity` folder:
+
+```bash
+git pull
+python install_antigravity.py --write
+```
+
+*(Then **restart Antigravity**. If only `server.py`/`worker.py` changed and `plugin/` did not, `git pull` + restart is enough.)*
+
 ## ✨ Why Code Mode?
 
 * **Zero external dependencies** — pure Python standard library, installs in seconds.

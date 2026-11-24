@@ -47,6 +47,17 @@ python install_antigravity.py --write
 > [!TIP]
 > Trình cài đặt tự động bật **`eager: true`** cho `py_exec` và cài sẵn bộ quy tắc **`plugin/rules/AGENTS.md`** để AI ưu tiên gộp lệnh vào `py_exec` ngay từ đầu thay vì chạy nhiều lệnh shell rời rạc.
 
+## 🔄 Cập nhật
+
+Mở Terminal trong thư mục `code-mode-antigravity` đã tải về trước đó và chạy:
+
+```bash
+git pull
+python install_antigravity.py --write
+```
+
+*(Sau đó **mở lại Antigravity**. Nếu bản cập nhật không đổi `plugin/` hay cấu hình MCP, chỉ cần `git pull` rồi mở lại Antigravity là đủ.)*
+
 ## ✨ Tại sao nên dùng?
 
 * **Không cần cài thư viện ngoài** — chỉ dùng thư viện chuẩn có sẵn của Python.

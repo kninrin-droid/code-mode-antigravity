@@ -70,12 +70,22 @@ class Worker:
         )
 
     def stop(self):
-        if self._alive():
-            try:
-                self.proc.kill()
-            except OSError:
-                pass
+        proc = self.proc
         self.proc = None
+        if proc is None:
+            return
+        if proc.poll() is None:
+            try:
+                proc.kill()
+                proc.wait(timeout=2)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+        for pipe in (proc.stdin, proc.stdout):
+            if pipe is not None:
+                try:
+                    pipe.close()
+                except OSError:
+                    pass
 
     def call(self, code, timeout, cwd=None):
         if cwd:
@@ -151,7 +161,10 @@ TOOLS = [
     },
     {
         "name": "py_reset",
-        "description": "Reset the Python session: clear all variables, imports, and defined functions.",
+        "description": (
+            "Reset the Python session: clear all variables, imports, and defined functions "
+            "(keeps the last working directory)."
+        ),
         "inputSchema": {"type": "object", "properties": {}},
     },
 ]
@@ -250,28 +263,31 @@ def handle_request(req):
 
 
 def main():
-    for raw in sys.stdin:
-        line = raw.strip()
-        if not line:
-            continue
-        try:
-            message = json.loads(line)
-        except ValueError:
-            send({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}})
-            continue
-        if not isinstance(message, dict) or "method" not in message:
-            continue
-        if "id" not in message:  # notification
-            continue
-        try:
-            response = handle_request(message)
-        except Exception as exc:  # pragma: no cover - defensive
-            response = {
-                "jsonrpc": "2.0",
-                "id": message.get("id"),
-                "error": {"code": -32603, "message": "Internal error: %s" % exc},
-            }
-        send(response)
+    try:
+        for raw in sys.stdin:
+            line = raw.strip()
+            if not line:
+                continue
+            try:
+                message = json.loads(line)
+            except ValueError:
+                send({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}})
+                continue
+            if not isinstance(message, dict) or "method" not in message:
+                continue
+            if "id" not in message:  # notification
+                continue
+            try:
+                response = handle_request(message)
+            except Exception as exc:  # pragma: no cover - defensive
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": message.get("id"),
+                    "error": {"code": -32603, "message": "Internal error: %s" % exc},
+                }
+            send(response)
+    finally:
+        WORKER.stop()
 
 
 if __name__ == "__main__":
